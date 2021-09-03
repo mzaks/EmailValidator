@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0B2158E926DFB12600A20100 /* EmailValidationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B2158E826DFB12600A20100 /* EmailValidationResult.swift */; };
 		20203BE41FCB833700117067 /* EmailValidator.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20203BDA1FCB833700117067 /* EmailValidator.framework */; };
 		20203BE91FCB833700117067 /* EmailValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20203BE81FCB833700117067 /* EmailValidatorTests.swift */; };
 		20203BEB1FCB833700117067 /* EmailValidator.h in Headers */ = {isa = PBXBuildFile; fileRef = 20203BDD1FCB833700117067 /* EmailValidator.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -24,6 +25,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0B2158E826DFB12600A20100 /* EmailValidationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailValidationResult.swift; sourceTree = "<group>"; };
 		20203BDA1FCB833700117067 /* EmailValidator.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = EmailValidator.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		20203BDD1FCB833700117067 /* EmailValidator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EmailValidator.h; sourceTree = "<group>"; };
 		20203BDE1FCB833700117067 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -76,6 +78,7 @@
 				20203BDD1FCB833700117067 /* EmailValidator.h */,
 				20203BDE1FCB833700117067 /* Info.plist */,
 				20203BF41FCB834C00117067 /* EmailValidator.swift */,
+				0B2158E826DFB12600A20100 /* EmailValidationResult.swift */,
 			);
 			path = EmailValidator;
 			sourceTree = "<group>";
@@ -200,6 +203,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0B2158E926DFB12600A20100 /* EmailValidationResult.swift in Sources */,
 				20203BF51FCB834C00117067 /* EmailValidator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

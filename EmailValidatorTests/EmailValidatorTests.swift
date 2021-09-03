@@ -126,6 +126,54 @@ class EmailValidatorTests: XCTestCase {
         "No longer available.",
         "Moved.",
     ]
+  
+  static var invalidAddresseResults: [EmailValidationResult] = [
+    .localPartIsQoutedBadly(String.Index(encodedOffset: 17)), //"\"asdasd@asdas.com",
+    .emptyString,  //"",
+    .noAtCharacterFound,  //"invalid",
+    .domainIsMalformed(String.Index(encodedOffset: 8)),  //"invalid@",
+    .localPartIsMalformed(String.Index(encodedOffset: 7)),  //"invalid @",
+    .ipV4AddressIsMalformed(String.Index(encodedOffset: 12)),  //"invalid@[555.666.777.888]",
+    .ipV6AddressIsMalformed(String.Index(encodedOffset: 20)),  //"invalid@[IPv6:123456]",
+    .ipAddressIsMalformed(String.Index(encodedOffset: 18)),  //"invalid@[127.0.0.1.]",
+    .domainIsMalformed(String.Index(encodedOffset: 19)),  //"invalid@[127.0.0.1].",
+    .domainIsMalformed(String.Index(encodedOffset: 19)),  //"invalid@[127.0.0.1]x",
+
+      // examples from wikipedia
+    .noAtCharacterFound,  //"Abc.example.com",
+    .domainIsMalformed(String.Index(encodedOffset: 3)),  //"A@b@c@example.com",
+    .localPartIsMalformed(String.Index(encodedOffset: 1)),  //"a\"b(c)d,e:f;g<h>i[j\\k]l@example.com",
+    .localPartIsMalformed(String.Index(encodedOffset: 4)),  //"just\"not\"right@example.com",
+    .localPartIsMalformed(String.Index(encodedOffset: 4)),  //"this is\"not\\allowed@example.com",
+    .localPartIsMalformed(String.Index(encodedOffset: 4)),  //"this\\ still\\\"not\\\\allowed@example.com",
+
+      // examples from https://github.com/Sembiance/email-validator
+    .localPartIsMalformed(String.Index(encodedOffset: 1)),  //"! #$%`|@invalid-characters-in-local.org",
+    .localPartIsMalformed(String.Index(encodedOffset: 0)),  //"(),:;`|@more-invalid-characters-in-local.org",
+    .localPartIsMalformed(String.Index(encodedOffset: 1)),  //"* .local-starts-with-dot@sld.com",
+    .localPartIsMalformed(String.Index(encodedOffset: 0)),  //"<>@[]`|@even-more-invalid-characters-in-local.org",
+    .localPartIsMalformed(String.Index(encodedOffset: 0)),  //"@missing-local.org",
+    .domainIsMalformed(String.Index(encodedOffset: 21)),  //"IP-and-port@127.0.0.1:25",
+    .domainIsMalformed(String.Index(encodedOffset: 30)),  //"another-invalid-ip@127.0.0.256",
+    .noAtCharacterFound,  //"invalid",
+    .domainIsMalformed(String.Index(encodedOffset: 26)),  //"invalid-characters-in-sld@! \"#$%(),/;<>_[]`|.org",
+    .domainIsMalformed(String.Index(encodedOffset: 23)),  //"invalid-ip@127.0.0.1.26",
+    .localPartIsMalformed(String.Index(encodedOffset: 20)),  //"local-ends-with-dot.@sld.com",
+    .noAtCharacterFound,  //"missing-at-sign.net",
+    .domainIsMalformed(String.Index(encodedOffset: 12)),  //"missing-sld@.com",
+    .domainIsMalformed(String.Index(encodedOffset: 16)),  //"missing-tld@sld.",
+    .domainIsMalformed(String.Index(encodedOffset: 23)),  //"sld-ends-with-dash@sld-.com",
+    .domainIsMalformed(String.Index(encodedOffset: 23)),  //"sld-starts-with-dashsh@-sld.com",
+    .domainIsMalformed(String.Index(encodedOffset: 138)),  //"the-character-limit@for-each-part.of-the-domain.is-sixty-three-characters.this-is-exactly-sixty-four-characters-so-it-is-invalid-blah-blah.com",
+    .localPartIsTooLong(String.Index(encodedOffset: 68)),  //"the-local-part-is-invalid-if-it-is-longer-than-sixty-four-characters@sld.net",
+    .stringIsTooLong(255),  //"the-total-length@of-an-entire-address.cannot-be-longer-than-two-hundred-and-fifty-four-characters.and-this-address-is-255-characters-exactly.so-it-should-be-invalid.and-im-going-to-add-some-more-words-here.to-increase-the-lenght-blah-blah-blah-blah-bl.org",
+    .localPartIsMalformed(String.Index(encodedOffset: 4)),  //"two..consecutive-dots@sld.com",
+    .domainIsMalformed(String.Index(encodedOffset: 24)),  //"unbracketed-IP@127.0.0.1",
+
+      // examples of real (invalid) input from real users.
+    .localPartIsMalformed(String.Index(encodedOffset: 2)), //"No longer available.",
+    .localPartIsMalformed(String.Index(encodedOffset: 6)) //  "Moved.",
+  ]
 
     static var validInternationalAddresses: [String] = [
         "伊昭傑@郵件.商務", // Chinese
@@ -159,4 +207,55 @@ class EmailValidatorTests: XCTestCase {
             XCTAssertTrue(EmailValidator.validate(email: $0, allowTopLevelDomains: true, allowInternational: true), "AssertTrue Failure: \($0)")
         })
     }
+  
+    func testValidAddresseWithResult() {
+      EmailValidatorTests.validAddresses.forEach({
+        let result = EmailValidator.validateWithResult(email: $0, allowTopLevelDomains: true)
+        XCTAssertEqual(result, .success, "AssertTrue Failure: \($0)")
+      })
+    }
+  
+  func testValidInternationalAddressesWithResult() {
+      EmailValidatorTests.validInternationalAddresses.forEach({
+        let result = EmailValidator.validateWithResult(email: $0, allowTopLevelDomains: true, allowInternational: true)
+        XCTAssertEqual(result, .success, "AssertTrue Failure: \($0)")
+      })
+  }
+  
+  func testInvalidAddresseWithResult() {
+    EmailValidatorTests.invalidAddresses.enumerated().forEach({
+      let result = EmailValidator.validateWithResult(email: $0.element, allowTopLevelDomains: true)
+      XCTAssertEqual(result, EmailValidatorTests.invalidAddresseResults[$0.offset], "AssertFalse Failure: \($0.element) in \($0.offset), \(result.errorString)")
+    })
+  }
+  
+  func testInvalidResult() {
+    let result = EmailValidator.validateWithResult(email: "invalid @")
+    XCTAssertEqual(result, .localPartIsMalformed(String.Index(encodedOffset: 7)))
+  }
+}
+
+extension EmailValidationResult {
+  var errorString: String {
+    switch self {
+    case .emptyString, .noAtCharacterFound, .success:
+      return "\(self)"
+    case .domainIsMalformed(let index):
+      return "domainIsMalformed \(index.encodedOffset)"
+    case .ipAddressIsMalformed(let index):
+      return "ipAddressIsMalformed \(index.encodedOffset)"
+    case .ipV4AddressIsMalformed(let index):
+      return "ipV4AddressIsMalformed \(index.encodedOffset)"
+    case .ipV6AddressIsMalformed(let index):
+      return "ipV6AddressIsMalformed \(index.encodedOffset)"
+    case .localPartIsMalformed(let index):
+      return "localPartIsMalformed \(index.encodedOffset)"
+    case .localPartIsQoutedBadly(let index):
+      return "localPartIsQoutedBadly \(index.encodedOffset)"
+    case .stringIsTooLong(let length):
+      return "stringIsTooLong \(length)"
+    case .localPartIsTooLong(let index):
+      return "localPartIsTooLong \(index.encodedOffset)"
+    }
+  }
 }

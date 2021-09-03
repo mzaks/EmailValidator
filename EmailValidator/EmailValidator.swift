@@ -357,6 +357,103 @@ public class EmailValidator {
 
         return index == email.endIndex
     }
+
+    /// Check whether the given email is a valid address based on rfc5322 & rfc653x and resturns a suffisticated non binary result.
+    /// - Parameters:
+    ///     - email: The email address to test
+    ///     - allowTopLevelDomains: Allow top level domains (e.g. `postmaster@dk`)
+    ///     - allowInternational: Allow international addresses (e.g. cyrillic or chinese)
+    /// - Returns: EmailValidationResult which is an enum communicating what kind of error was found in the email address, or if the validation was successful.
+    public class func validateWithResult(email: String, allowTopLevelDomains: Bool = false, allowInternational: Bool = false) -> EmailValidationResult {
+
+        if email.isEmpty {
+            return .emptyString
+        }
+
+        if email.endIndex.utf16Offset(in: email) >= 255 {
+            return .stringIsTooLong(email.endIndex.utf16Offset(in: email))
+        }
+
+        var index = email.startIndex
+
+        if email[index] == "\"" {
+            if !skipQuoted(text: email, index: &index, allowInternational: allowInternational) {
+                return .localPartIsQoutedBadly(index)
+            }
+            if index >= email.endIndex {
+                return .noAtCharacterFound
+            }
+        } else {
+            if !skipAtom(text: email, index: &index, allowInternational: allowInternational) {
+                return .localPartIsMalformed(index)
+            }
+
+            if index >= email.endIndex {
+                return .noAtCharacterFound
+            }
+
+            while email[index] == "." {
+                index = email.index(after: index)
+
+                if index >= email.endIndex { return .localPartIsMalformed(index) }
+
+                if !skipAtom(text: email, index: &index, allowInternational: allowInternational) { return .localPartIsMalformed(index) }
+
+                if index >= email.endIndex { return .noAtCharacterFound }
+            }
+        }
+
+        let nextIndex = email.index(after: index)
+        if nextIndex > email.endIndex {
+            return .noAtCharacterFound
+        }
+        if index.utf16Offset(in: email) > 64  {
+            return .localPartIsTooLong(index)
+        }
+        if email[index] != "@" {
+            return .localPartIsMalformed(index)
+        }
+
+        index = nextIndex
+
+        if index == email.endIndex {
+            return .domainIsMalformed(index)
+        }
+
+        if email[index] != "[" {
+            if !skipDomain(text: email, index: &index, allowTopLevelDomains: allowTopLevelDomains, allowInternational: allowInternational) {
+                return .domainIsMalformed(index)
+            }
+
+            return index == email.endIndex ? .success : .domainIsMalformed(index)
+        }
+
+        index = email.index(after: index)
+
+        if email.index(index, offsetBy: 8) >= email.endIndex {
+            return .ipAddressIsMalformed(index)
+        }
+
+        let ipv6 = email[index ... email.index(index, offsetBy: 4)]
+        if ipv6.lowercased() == "ipv6:" {
+            index = email.index(index, offsetBy: ipv6.count)
+            if !skipIPv6Literal(text: email, index: &index) {
+                return .ipV6AddressIsMalformed(index)
+            }
+        } else {
+            if !skipIPv4Literal(text: email, index: &index) {
+                return .ipV4AddressIsMalformed(index)
+            }
+        }
+
+        if index >= email.endIndex || email[index] != "]" {
+            return .ipAddressIsMalformed(index)
+        }
+
+        index = email.index(after: index)
+
+        return index == email.endIndex ? .success : .domainIsMalformed(index)
+    }
 }
 
 extension Character {
